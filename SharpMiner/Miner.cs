@@ -23,31 +23,32 @@ public class Miner
     string longpooling = null;
     long hr = 0;
     Stopwatch elapsedtime = new Stopwatch();
-   // int  = 0;
-    //int shresubmitted = 0;
-    //int sharesaccepted = 0;
-    DateTime D0 = DateTime.Now;
+    public int shresubmitted = 0;
+    public int sharesaccepted = 0;
+    public bool Started = true;
+
     public Miner()
     { 
         hashspeed = 0;
         LP = new Thread(() => newblock("", ""));
     }
+
     int READ_TIMEOUT = 30 * 60 * 1000; // ms
     Thread[] ths;
     Thread LP;
     int i = 0;
     static char[] BASE64_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/".ToCharArray();
     //===================Main=====================================================2, 2
-    public void go(string url, string user, string pass)
+    public void go(string url, string user, string pass,int proc=1)
     {
-        object args = new object[3] { user,pass,url };
-        while (true)
+        string cred = String.Format("{0}:{1}", user, pass);
+        while (Started)
         {
             try
             {
-                int pcount = 1;//Environment.ProcessorCount;
+                int pcount = proc;//Environment.ProcessorCount;
                 ths = new Thread[pcount];
-                Go(args);
+                Go(cred,url);
             }
             catch (Exception Ex)
             {
@@ -104,16 +105,9 @@ public class Miner
         }
     }
     //============================================================================
-    public void Go(object args)
+    public void Go(string cred, string url)
     {
-            Array argArray = new object[3];
-            argArray = (Array)args;
-            string user = (string)argArray.GetValue(0);
-            string pass = (string)argArray.GetValue(1);
-            string url = (string)argArray.GetValue(2);
-
             i++;
-            string cred = user + ":" + pass;
             string resp = getwork(url, cred);
             
             var ada = (Hashtable)JSON.JsonDecode(resp);
@@ -128,10 +122,9 @@ public class Miner
             done = false;
             fnonce = 0;
             hr = 0;
-            D0 = DateTime.Now;
             elapsedtime.Reset();
             elapsedtime.Start();
-            for (int ii = 0; ii < ths.Length; ii++)
+            for (var ii = 0; ii < ths.Length; ii++)
             {
                 object argss = new object[4] { databyte, targetbyte, (uint)ii, (uint)ths.Length };
                 ths[ii] = new Thread(() => doScrypt(argss));
@@ -306,14 +299,12 @@ public class Miner
                 }
             }
         }
-      //  shresubmitted++;
-    //    Console.WriteLine(res);
-      //  if (res.Contains("\"result\": true"))
-       // {
-        //    sharesaccepted++;
-          //  Console.WriteLine("Share Accepted! " + sharesaccepted+"/"+shresubmitted);
-      //  }
-    //    else Console.WriteLine("Share Denied! " + sharesaccepted + "/" + shresubmitted);
+        shresubmitted++;
+        Console.WriteLine(res);
+        if (res.Contains("\"result\": true"))
+        {
+            sharesaccepted++;
+        }
         return res;
     }
     //============================================================================

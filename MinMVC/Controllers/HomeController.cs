@@ -5,6 +5,7 @@ using System.Threading;
 using System.Web;
 using System.Web.Mvc;
 using MinMVC.Controllers;
+using MinMVC.ViewModel;
 
 
 namespace MinMVC
@@ -14,21 +15,28 @@ namespace MinMVC
         //
         // GET: /Home/
 
-        public string Index()
+        public ActionResult Index()
         {
+            var model = new HomeViewModel()
+                {
+                    Accept = SingThread.Instance.sharesaccepted.ToString(),
+                    Proc = Environment.ProcessorCount.ToString(),
+                    Speed = SingThread.Instance.hashspeed.ToString(),
+                    Submit = SingThread.Instance.shresubmitted.ToString()
+                };
 
-            return SingThread.Instance.hashspeed.ToString();
+            return View(model);
         }
 
         public ActionResult Start()
         {
-            SingThread.Instance.go("http://pool-nvc.khore.org:8080", "skoprioniche.1", "x");
+            SingThread.Instance.go(Values.Url, Values.User, Values.Pass);
             return View();
         }
 
         public ActionResult Stop()
         {
-
+            SingThread.Instance.Started = false;
             return View();
         }
     }

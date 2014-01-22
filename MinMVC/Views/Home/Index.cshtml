@@ -1,6 +1,18 @@
-﻿@{
+﻿@model MinMVC.ViewModel.HomeViewModel
+@{
     ViewBag.Title = "Index";
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
-<h2>Index</h2>
+<h2>
+    Proc: @Model.Proc
+</h2>
+<h2>
+    Speed: @Model.Speed
+</h2>
+<h2>
+    Submit: @Model.Submit
+</h2>
+<h2>
+  Acept:  @Model.Accept
+</h2>
