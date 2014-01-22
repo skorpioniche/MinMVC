@@ -1,18 +1,4 @@
-/* NUGET: BEGIN LICENSE TEXT
- *
- * Microsoft grants you the right to use these script files for the sole
- * purpose of either: (i) interacting through your browser with the Microsoft
- * website or online service, subject to the applicable licensing or use
- * terms; or (ii) using the files as included with a Microsoft product subject
- * to that product's license terms. Microsoft reserves all other rights to the
- * files not expressly granted by Microsoft, whether by implication, estoppel
- * or otherwise. Insofar as a script file is dual licensed under GPL,
- * Microsoft neither took the code under GPL nor distributes it thereunder but
- * under the terms set out in this paragraph. All notices and licenses
- * below are for informational purposes only.
- *
- * NUGET: END LICENSE TEXT */
-/*!
+﻿/*!
 ** Unobtrusive validation support library for jQuery and jQuery Validate
 ** Copyright (C) Microsoft Corporation. All rights reserved.
 */
@@ -54,10 +40,10 @@
 
     function onError(error, inputElement) {  // 'this' is the form element
         var container = $(this).find("[data-valmsg-for='" + escapeAttributeValue(inputElement[0].name) + "']"),
-            replaceAttrValue = container.attr("data-valmsg-replace"),
-            replace = replaceAttrValue ? $.parseJSON(replaceAttrValue) !== false : null;
+            replace = $.parseJSON(container.attr("data-valmsg-replace") || "null") !== false;
 
         container.removeClass("field-validation-valid").addClass("field-validation-error");
+        container.closest(".control-group").addClass("error");
         error.data("unobtrusiveContainer", container);
 
         if (replace) {
@@ -76,7 +62,7 @@
         if (list && list.length && validator.errorList.length) {
             list.empty();
             container.addClass("validation-summary-errors").removeClass("validation-summary-valid");
-
+            
             $.each(validator.errorList, function () {
                 $("<li />").html(this.message).appendTo(list);
             });
@@ -85,11 +71,11 @@
 
     function onSuccess(error) {  // 'this' is the form element
         var container = error.data("unobtrusiveContainer"),
-            replaceAttrValue = container.attr("data-valmsg-replace"),
-            replace = replaceAttrValue ? $.parseJSON(replaceAttrValue) : null;
+            replace = $.parseJSON(container.attr("data-valmsg-replace") || "null");
 
         if (container) {
             container.addClass("field-validation-valid").removeClass("field-validation-error");
+            container.closest(".control-group").removeClass("error");
             error.removeData("unobtrusiveContainer");
 
             if (replace) {
@@ -110,6 +96,7 @@
             .removeData("unobtrusiveContainer")
             .find(">*")  // If we were using valmsg-replace, get the underlying error
                 .removeData("unobtrusiveContainer");
+        $form.find(".control-group").removeClass("error");
     }
 
     function validationInfo(form) {
@@ -212,9 +199,7 @@
                 .add($(selector).find("form"))
                 .filter("form");
 
-            // :input is a psuedoselector provided by jQuery which selects input and input-like elements
-            // combining :input with other selectors significantly decreases performance.
-            $(selector).find(":input").filter("[data-val=true]").each(function () {
+            $(selector).find(":input[data-val=true]").each(function () {
                 $jQval.unobtrusive.parseElement(this, true);
             });
 
@@ -322,34 +307,14 @@
         return (match && (match.index === 0) && (match[0].length === value.length));
     });
 
-    $jQval.addMethod("nonalphamin", function (value, element, nonalphamin) {
-        var match;
-        if (nonalphamin) {
-            match = value.match(/\W/g);
-            match = match && match.length >= nonalphamin;
-        }
-        return match;
-    });
-
-    if ($jQval.methods.extension) {
-        adapters.addSingleVal("accept", "mimtype");
-        adapters.addSingleVal("extension", "extension");
-    } else {
-        // for backward compatibility, when the 'extension' validation method does not exist, such as with versions
-        // of JQuery Validation plugin prior to 1.10, we should use the 'accept' method for
-        // validating the extension, and ignore mime-type validations as they are not supported.
-        adapters.addSingleVal("extension", "extension", "accept");
-    }
-
-    adapters.addSingleVal("regex", "pattern");
+    adapters.addSingleVal("accept", "exts").addSingleVal("regex", "pattern");
     adapters.addBool("creditcard").addBool("date").addBool("digits").addBool("email").addBool("number").addBool("url");
     adapters.addMinMax("length", "minlength", "maxlength", "rangelength").addMinMax("range", "min", "max", "range");
-    adapters.addMinMax("minlength", "minlength").addMinMax("maxlength", "minlength", "maxlength");
     adapters.add("equalto", ["other"], function (options) {
         var prefix = getModelPrefix(options.element.name),
             other = options.params.other,
             fullOtherName = appendModelPrefix(other, prefix),
-            element = $(options.form).find(":input").filter("[name='" + escapeAttributeValue(fullOtherName) + "']")[0];
+            element = $(options.form).find(":input[name='" + escapeAttributeValue(fullOtherName) + "']")[0];
 
         setValidationValues(options, "equalTo", element);
     });
@@ -370,25 +335,14 @@
         $.each(splitAndTrim(options.params.additionalfields || options.element.name), function (i, fieldName) {
             var paramName = appendModelPrefix(fieldName, prefix);
             value.data[paramName] = function () {
-                return $(options.form).find(":input").filter("[name='" + escapeAttributeValue(paramName) + "']").val();
+                return $(options.form).find(":input[name='" + escapeAttributeValue(paramName) + "']").val();
             };
         });
 
         setValidationValues(options, "remote", value);
     });
-    adapters.add("password", ["min", "nonalphamin", "regex"], function (options) {
-        if (options.params.min) {
-            setValidationValues(options, "minlength", options.params.min);
-        }
-        if (options.params.nonalphamin) {
-            setValidationValues(options, "nonalphamin", options.params.nonalphamin);
-        }
-        if (options.params.regex) {
-            setValidationValues(options, "regex", options.params.regex);
-        }
-    });
 
     $(function () {
         $jQval.unobtrusive.parse(document);
     });
-}(jQuery));
+} (jQuery));
